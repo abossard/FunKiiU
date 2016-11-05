@@ -1,0 +1,3 @@
+[submodule "pyflit"]
+	path = pyflit
+	url = https://github.com/galeo/pyflit.git
