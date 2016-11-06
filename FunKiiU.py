@@ -15,12 +15,14 @@ import os
 import re
 import sys
 import zlib
-
-from multiprocessing import Pool, TimeoutError
-
 import time
-
 import signal
+
+sys.path.append('./pyflit')
+
+from pyflit import flit, configs
+
+configs.settings['accept_gzip'] = False 
 
 try:
     from urllib.request import urlopen
@@ -112,7 +114,10 @@ def progress_bar(part, total, length=10, char='#', blank=' ', left='[', right=']
 def download_file(url, outfname, retry_count=3, ignore_404=False, expected_size=None, chunk_size=0x4096):
     for _ in retry(retry_count):
         try:
-            infile = urlopen(url)
+            opener = flit.get_opener()
+            # res = flit.flit_segments(url, 2)
+            # infile = urlopen(url)
+            infile = opener.open(url)
             # start of modified code
             if os.path.isfile(outfname):
                 statinfo = os.stat(outfname)
@@ -425,27 +430,10 @@ def main(titles=None, keys=None, onlinekeys=False, onlinetickets=True, download_
                 continue
             elif onlinekeys and (not title_data['titleKey']):
                 continue
-            jobData.append([title_id, title_key, name, region, output_dir, retry_count, onlinetickets, patch_demo, patch_dlc, simulate, tickets_only])
-
-        # http://stackoverflow.com/a/11312948/21027
-        pool = Pool(processes=4, initializer=init_worker)
-        try:
-            pool.map(process_title_id_job, jobData)
-        except KeyboardInterrupt:
-            # Allow ^C to interrupt from any thread.
-            sys.stdout.write('\033[0m')
-            sys.stdout.write('User Interupt\n')
-            pool.terminate()
-        else:
-            pool.close()
-        pool.join()
+            process_title_id(title_id, title_key, name, region, output_dir, retry_count, onlinetickets, patch_demo, patch_dlc, simulate, tickets_only)
 
 def log(output):
     print(output.encode(sys.stdout.encoding, errors='replace'))
-
-
-def process_title_id_job(args):
-    return process_title_id(*args)
 
 
 def init_worker():
