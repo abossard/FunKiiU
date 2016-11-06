@@ -20,9 +20,7 @@ import signal
 
 sys.path.append('./pyflit')
 
-from pyflit import flit, configs
-
-configs.settings['accept_gzip'] = False 
+from pyflit import flit
 
 try:
     from urllib.request import urlopen
@@ -114,10 +112,11 @@ def progress_bar(part, total, length=10, char='#', blank=' ', left='[', right=']
 def download_file(url, outfname, retry_count=3, ignore_404=False, expected_size=None, chunk_size=0x4096):
     for _ in retry(retry_count):
         try:
+            
             opener = flit.get_opener()
-            # res = flit.flit_segments(url, 2)
-            # infile = urlopen(url)
-            infile = opener.open(url)
+            infile = flit.flit_segments(url, 6, opener) if expected_size else opener.open(url) 
+            # infile = opener.open(url)
+            
             # start of modified code
             if os.path.isfile(outfname):
                 statinfo = os.stat(outfname)
